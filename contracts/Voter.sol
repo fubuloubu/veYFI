@@ -31,7 +31,7 @@ contract Voter {
 
     event UpdatedGov(address gov);
     event Reset(address account);
-    event Vote(address gauge, uint256 weigth);
+    event Votes(address account, address[] gauge, uint256[] weigth);
     event VaultAdded(address vault);
     event Delegation(address sender, address recipient);
 
@@ -129,6 +129,7 @@ contract Voter {
         for (uint256 i = 0; i < _vaultCnt; i++) {
             _totalVoteWeight += _weights[i];
         }
+        uint256[] memory accountWeights = new uint256[](_vaultCnt);
 
         for (uint256 i = 0; i < _vaultCnt; i++) {
             address _vault = _vaultVote[i];
@@ -141,9 +142,10 @@ contract Voter {
                 weights[_vault] += _vaultWeight;
                 vaultVote[_account].push(_vault);
                 votes[_account][_vault] += _vaultWeight;
-                emit Vote(_gauge, _vaultWeight);
+                accountWeights[i] = _vaultWeight;
             }
         }
+        emit Votes(_account, _vaultVote, accountWeights);
         totalWeight += _totalWeight;
         usedWeights[_account] = _usedWeight;
     }

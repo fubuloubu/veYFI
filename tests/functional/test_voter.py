@@ -1,6 +1,6 @@
 import brownie
 import pytest
-from brownie import ZERO_ADDRESS, chain, Gauge
+from brownie import ZERO_ADDRESS, accounts, chain, Gauge
 
 
 def test_vote(
@@ -213,3 +213,24 @@ def test_set_gov(voter, gov, panda):
         voter.setGov(ZERO_ADDRESS, {"from": gov})
     voter.setGov(panda, {"from": gov})
     assert voter.gov() == panda
+
+def test_vote_gas_usage(voter, yfi, ve_yfi, create_vault, create_gauge):
+    amount = 10 ** 18
+    for account in accounts:
+        yfi.mint(account, amount)
+        yfi.approve(ve_yfi, amount, {"from": account})
+        ve_yfi.create_lock(amount, chain.time() + 3600 * 24 * 365, {"from": account})
+        assert ve_yfi.balanceOf(account) != 0
+    
+    for account in accounts[1:]:
+        voter.delegate(accounts[0], True, {"from": account})
+    
+    vaults = []
+    votes = []
+    for i in range(0, 10):
+        vault = create_vault()
+        create_gauge(vault)
+        vaults.append(vault)
+        votes.append(1)
+
+    voter.vote(accounts[0:], vaults, votes, {"from": accounts[0]})
